@@ -1,73 +1,73 @@
-# Workstation e prove — 7 ottobre 2026
+# Workstation inspection and tests — October 7, 2026
 
-## Dati verificati
+## Verified observations
 
-| Voce | Risultato | Metodo / limite |
+| Item | Result | Method / limitation |
 |---|---|---|
-| Sistema | Windows, versione kernel 10.0.26200 | RuntimeInformation.OSDescription; edizione non accertata |
-| CPU | AMD Ryzen 9 7900 12-Core Processor | Registro CPU; 24 processori logici dal runtime |
-| RAM / GPU | Non accertate | Letture CIM negate dal sandbox |
-| Desktop Video | Installazione presente; DLL DeckLinkAPI64, Decklink64 e audio versione prodotto 15.1 | File in Program Files; non prova versione effettiva di ogni driver caricato |
-| Schede Blackmagic | Modello, quantità e connettori non accertati | Inventario PnP/CIM: Access denied |
-| Docker | Non trovato in PATH o directory standard verificata | Non dedurre assenza di una VM remota |
-| WSL | Comando presente, componente non installato | `wsl --list --quiet` |
-| FFmpeg / GStreamer | Non trovati in PATH | Potrebbero esistere altrove; nessuna ricerca nei documenti personali |
-| Node / Git | 24.13.0 / 2.53.0.windows.1 | Comandi versione |
-| .NET SDK | 8.0.319 e 9.0.310 | `dotnet --list-sdks` |
-| Browser | Edge 154.0.4258.62 | Browser lanciato con Playwright |
-| Rete | Inventario NIC non disponibile | Get-NetAdapter: Access denied |
-| Porte | Porte della demo non presenti nel campione listener; binding reale riuscito | netstat e successivo avvio; non prova accesso LAN |
-| Repository | Main iniziale con solo README, commit 9c0c3d5 | Clone remoto; nessun lavoro preesistente sovrascritto |
+| Operating system | Windows, kernel 10.0.26200 | RuntimeInformation.OSDescription; edition not determined |
+| CPU | AMD Ryzen 9 7900 12-Core Processor | CPU registry entry; runtime reports 24 logical processors |
+| RAM / GPU | Not determined | CIM reads denied by sandbox |
+| Desktop Video | Installation present; DeckLinkAPI64, Decklink64 and audio DLL product version 15.1 | Program Files inspection; does not establish the version of every loaded driver |
+| Blackmagic cards | Models, count and connectors not determined | PnP/CIM inventory: Access denied |
+| Docker | Not found in PATH or the checked standard directory | Does not rule out a remote VM |
+| WSL | Command present, component not installed | wsl --list --quiet |
+| FFmpeg / GStreamer | Not found in PATH | May exist elsewhere; personal documents were not searched |
+| Node / Git | 24.13.0 / 2.53.0.windows.1 | Version commands |
+| .NET SDK | 8.0.319 and 9.0.310 | dotnet --list-sdks |
+| Browser | Edge 154.0.4258.62 | Launched with Playwright |
+| Networking | NIC inventory unavailable | Get-NetAdapter: Access denied |
+| Ports | Demo ports absent from sampled listeners; actual binding succeeded | netstat and subsequent startup; no LAN-access verification |
+| Repository | Initial main branch contained only README, commit 9c0c3d5 | Remote clone; existing work preserved |
 
-## Tool portabili scaricati per il test
+## Portable test tools
 
-Non installati nel sistema né inclusi in Git. MediaMTX 1.21.1 Windows amd64: checksum verificato contro `checksums.sha256` upstream:
+Tools were downloaded locally, not installed system-wide or included in Git. MediaMTX 1.21.1 Windows amd64 archive SHA256 matched upstream checksums.sha256:
 
 `faa97974861eb75a68b5aa326c78e7e7a6f670b5ef191bace78e715130381f23`.
 
-FFmpeg BtbN n8.1.3-14-g330caae0c1-20261006, GPL con `--enable-version3`; archivio n8.1 win64 GPL SHA256 verificato rispetto al digest dell'asset GitHub:
+FFmpeg BtbN n8.1.3-14-g330caae0c1-20261006, GPL with --enable-version3. The n8.1 win64 GPL archive SHA256 matched the GitHub asset digest:
 
 `ae302cb27f0f1eceab8441f7e9a0d8cab4daf5130aa4d024a76d0655a4aea97d`.
 
-Questo asset proviene da un URL `latest` mutabile: mantenere l'archivio verificato per ripetere esattamente il test. Non usare silenziosamente un nuovo archivio allo stesso URL.
+The FFmpeg asset uses a mutable latest URL. Keep the verified archive to reproduce this exact test; do not silently substitute a newer archive from the same URL.
 
-FFmpeg elenca x264, AAC, Opus, NVENC, QSV e AMF. Solo x264 software, AAC e Opus sono stati esercitati. La presenza di un encoder nell'elenco non dimostra GPU disponibile né successo della codifica hardware. DeckLink non compare tra i dispositivi di questa build; DirectShow compare. Nessuna sorgente SDI o NDI ancora acquisita.
+FFmpeg lists x264, AAC, Opus, NVENC, QSV and AMF. Only software x264, AAC and Opus were exercised. Listing an encoder does not demonstrate available GPU hardware or successful hardware encoding. This build does not list DeckLink devices; it lists DirectShow. No SDI or NDI source has been captured.
 
-## Primo test video
+## Initial video test
 
-MediaMTX + FFmpeg portabili, prima backend Node e poi eseguibile .NET, loopback Windows. Edge headless 154.0.4258.62, sorgente 1280x720/25, H.264 baseline senza B-frame, Opus per WHEP e AAC per HLS.
+Portable MediaMTX and FFmpeg on Windows loopback, first with a Node backend and then with the .NET executable. Edge headless 154.0.4258.62, 1280x720 at 25 fps, H.264 baseline without B-frames, Opus for WHEP and AAC for HLS.
 
-Sul primo test .NET: WebRTC 176 frame decodificati, HLS 128 frame; entrambi avanzano per circa 5 secondi durante il campionamento, nessun frame scartato e nessun errore JavaScript. WebRTC ha una traccia audio live; il primo test non verifica ascolto o campioni audio. Un test aggiornato analizza anche l'audio decodificato.
+The first .NET test decoded 176 WebRTC frames and 128 HLS frames. Both advanced for approximately five seconds during sampling, with no dropped frames or JavaScript errors. WebRTC exposed a live audio track; this initial test did not verify listening or decoded audio samples. The updated integration test also analyzes decoded audio.
 
-Distanza osservata del player HLS dal bordo della finestra seekable: circa 0,73 s. **Non è una misura di latenza end-to-end**: non include età dell'ultimo segmento né tutta la pipeline. Nessuna latenza glass-to-glass dimostrata; misurarla in seguito con un riferimento temporale comune. Le misure aggiornate sono salvate dal test in `test-results/browser.json` (ignorato da Git).
+The HLS player was approximately 0.73 seconds behind its seekable-window edge. **This is not end-to-end latency**: it excludes the age of the latest segment and other pipeline delays. Glass-to-glass latency has not been demonstrated; a shared timing reference is required. Updated measurements are saved to `test-results/browser.json`, excluded from Git.
 
-Primo campione dei processi portabili: FFmpeg circa 86 MB working set, MediaMTX circa 76 MB, backend Node circa 55 MB. CPU riportata da Get-Process è tempo cumulativo, non percentuale; il consumo .NET va campionato separatamente. Il test è breve e sintetico: non dimostra stabilità di lunga durata, throughput massimo, audio udibile, browser diversi o comportamento in LAN.
+The initial portable-process sample showed approximately 86 MB working set for FFmpeg, 76 MB for MediaMTX and 55 MB for Node. Get-Process CPU is cumulative CPU time, not a percentage. These short synthetic tests do not demonstrate long-term stability, maximum throughput, speaker output, other browsers or LAN behavior.
 
-## Blocchi e alternative osservati
+## Observed blockers and alternatives
 
-- CIM, schede e NIC: Access denied. Alternativa: eseguire l'inventario come utente workstation o usare il futuro adattatore SDK per enumerare dispositivi.
-- Nessun Docker/WSL funzionante. Dopo conferma dell'utente, architettura cambiata a Windows nativo; nessuna installazione di virtualizzazione.
-- Git HTTPS con schannel: SEC_E_NO_CREDENTIALS. Clone riuscito con `git -c http.sslBackend=openssl`; nessuna impostazione globale cambiata.
-- NuGet e npm provano cache esterne non scrivibili. Cache spostate nella workspace. NuGet HTTPS dal processo .NET non disponibile nel sandbox; recupero via Node HTTPS e proxy esclusivamente loopback per compilare. Nessuna eccezione TLS disabilitata e nessun proxy del sistema cambiato. Lockfile mantiene hash dei pacchetti; il proxy temporaneo non fa parte del prodotto.
-- Aggiunta canale durante il primo test: MediaMTX non ha applicato il cambio file su Windows, RTSP ha risposto `path is not configured`. Risolto usando il namespace regex dei canali test nel router, senza dipendere da hot reload e senza interrompere quelli attivi.
-- Installazione servizio, driver, accesso LAN e passthrough: non effettuati. Non dichiararli verificati.
+- CIM, card and NIC inspection: Access denied. Alternative: run inventory as the workstation user or enumerate devices through the future SDK adapter.
+- No working Docker/WSL installation. Architecture explicitly changed to native Windows after user confirmation; virtualization was not installed.
+- Git HTTPS using schannel: SEC_E_NO_CREDENTIALS. Clone succeeded with the per-command http.sslBackend=openssl override; no global setting changed.
+- npm and NuGet attempted unwritable external caches. Caches were moved into the workspace. .NET HTTPS access to NuGet was unavailable in the sandbox; compilation used Node HTTPS retrieval through a temporary loopback proxy. TLS validation was not disabled and system proxy settings were not changed. The lockfile retains package hashes; the temporary proxy is not part of the product.
+- Adding a channel during the first integration test did not trigger MediaMTX file reload on Windows; RTSP returned path is not configured. Fixed by configuring the synthetic-channel regex namespace, without depending on hot reload or interrupting active channels.
+- Service installation, drivers, LAN access and hardware passthrough were not tested.
 
-## Collaudo completo del gateway Windows
+## Complete Windows gateway test
 
-`npm test`, 7 ottobre 2026, durata 28,3 s: passato. Due processi FFmpeg, terminazione intenzionale del secondo, recupero con PID diverso, primo canale pronto e PID invariato; stop salva enabled=false; dopo riavvio del gateway il demo riparte e il secondo resta fermo. Origine HTTP esterna rifiutata con 403. Terminazione del gateway rimuove gli encoder attraverso Job Objects.
+`npm test`, October 7, 2026, 28.3 seconds: passed. Two FFmpeg processes; intentional termination of the second; recovery with a new PID; the first channel remained ready with the same PID. Stop persisted enabled=false. After gateway restart, the demo restarted and the second channel remained stopped. External HTTP origins were rejected with 403. Gateway termination removed encoders through Job Objects.
 
-| Misura browser | WebRTC/WHEP | HLS |
+| Browser measurement | WebRTC/WHEP | HLS |
 |---|---|---|
-| Codec | H.264 + Opus confermati da RTP stats | H.264 + AAC, API MediaMTX e flusso encoder |
-| Video | 1280x720, 176 frame, 1 dropped | 1280x720, 129 frame, 0 dropped |
-| Avanzamento in 5 s | 5,006 s | 4,964 s |
-| Audio RMS decodificato | 0,06266 | 0,06247 |
-| Attesa del criterio di playback | 2399 ms | 220 ms |
-| Buffer RTP medio | video 16 ms, audio 59 ms | Non applicabile |
-| Distanza dal live edge del player | Non misurata | 0,722 s |
+| Codecs | H.264 + Opus confirmed through RTP stats | H.264 + AAC, MediaMTX API and encoder output |
+| Video | 1280x720, 176 frames, 1 dropped | 1280x720, 129 frames, 0 dropped |
+| Progress during five seconds | 5.006 seconds | 4.964 seconds |
+| Decoded audio RMS | 0.06266 | 0.06247 |
+| Time until playback criterion | 2399 ms | 220 ms |
+| Mean RTP jitter buffer | Video 16 ms, audio 59 ms | Not applicable |
+| Player distance from live edge | Not measured | 0.722 seconds |
 
-Il criterio di playback comprende currentTime>2: non è il tempo esatto del primo frame. HLS ha segmenti già preparati dal router. Le misure di buffer e startup **non sono latenza end-to-end**. L'audio è stato analizzato come campioni PCM dopo unmute e connessione WebAudio; non è un test d'ascolto degli altoparlanti. Il primo tentativo con player HLS mutato e grafo audio senza uscita produceva RMS zero: corretto il metodo di misura, senza cambiare codec o flusso.
+The playback criterion includes currentTime>2; it is not the exact first-frame time. HLS segments were already prepared by the router. Startup and buffer measurements **are not end-to-end latency**. Audio was analyzed as decoded PCM after unmuting and connecting WebAudio; speakers were not tested. The first attempt with muted HLS playback and an audio graph without an output produced zero RMS. The measurement method was corrected without changing codecs or streams.
 
-Inno Setup 6.4.3 ha compilato `dist/NXTROUTE-Setup-0.1.0.exe`. Il pacchetto contiene .NET self-contained, MediaMTX e FFmpeg per prova locale; non è stato eseguito con privilegi amministrativi. Installazione/disinstallazione, avvio al boot e accesso hardware dall'account NetworkService restano da collaudare.
+Inno Setup 6.4.3 compiled `dist/NXTROUTE-Setup-0.1.0.exe`. This private test package contains self-contained .NET, MediaMTX and FFmpeg. It has not been run with administrator privileges. Installation/removal, startup at boot and hardware access from NetworkService remain untested.
 
-Campione separato del gateway .NET: un canale sintetico, due rendition, nessun player collegato, intervallo di 3,001 s dopo avvio. Working set: FFmpeg 80,6 MiB, MediaMTX 45,2 MiB, NXTROUTE 51,4 MiB. CPU normalizzata sui 24 processori logici: rispettivamente 0,02%, 0,04%, 0,00% arrotondati. È un campione breve a basso carico, non un benchmark né una stima di capacità; va ripetuto con spettatori e ingressi reali.
+A separate resource sample used one synthetic channel, two renditions and no connected viewer, over 3.001 seconds after startup. Working sets: FFmpeg 80.6 MiB, MediaMTX 45.2 MiB, NXTROUTE 51.4 MiB. CPU normalized across 24 logical processors: 0.02%, 0.04% and 0.00% rounded, respectively. This short, low-load sample is not a benchmark or capacity estimate; repeat with viewers and real inputs.

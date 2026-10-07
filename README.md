@@ -1,26 +1,26 @@
 # NXTROUTE
 
-Gateway video gratuito con codice originale pubblico, per workstation Windows. MediaMTX gestisce i protocolli; NXTROUTE gestisce canali, processi e interfaccia. Il progetto parte dal gateway NDI/SRT/RTMP/RTSP/HLS/SDI descritto nel README iniziale, ma distingue funzioni provate e previste.
+Free video gateway with public original source code for Windows workstations. MediaMTX handles media protocols; NXTROUTE manages channels, processes and the operator interface. The original project scope covers NDI, SRT, RTMP, RTSP, HLS and broadcast SDI; implemented and planned features are documented separately.
 
-**Prima demo:** sorgente sintetica 720p25, browser Edge, WebRTC/WHEP e HLS. SDI e NDI non sono ancora implementati. L'installer è sperimentale: installazione come servizio da collaudare. Accesso soltanto dal computer locale.
+**Initial demo:** synthetic 720p25 source, Edge playback over WebRTC/WHEP and HLS. SDI and NDI are not implemented yet. The installer is experimental: Windows service installation still needs testing. Access is restricted to the local computer.
 
-## Prova della build locale
+## Run the local build
 
-Una build è in `dist/portable/NXTROUTE.exe`. MediaMTX e FFmpeg devono essere in `components` accanto all'eseguibile. La build è self-contained: all'operatore non servono Node.js, Docker o .NET installato separatamente.
+The local executable is `dist/portable/NXTROUTE.exe`. MediaMTX and FFmpeg must be in its adjacent `components` directory. The build is self-contained: operators do not need Docker, Node.js or a separate .NET installation.
 
-Avviare dal terminale, per il collaudo di sviluppo:
+For a development test, run:
 
 ```powershell
 .\dist\portable\NXTROUTE.exe --data-dir "$PWD\.runtime\manual-data"
 ```
 
-Aprire http://127.0.0.1:3000. Il canale demo parte automaticamente. Usare i pulsanti WebRTC e HLS, abilitare l'audio nel player per ascoltare il tono. Aggiungere un canale test e avviarlo; fermarne uno non deve fermare l'altro. Arrestare il gateway con Ctrl+C. Configurazioni e log restano nella directory dati scelta.
+Open http://127.0.0.1:3000. The demo channel starts automatically. Use the WebRTC and HLS buttons and unmute the player to hear the tone. Add and start another test channel; stopping one must not stop the other. Press Ctrl+C to stop the gateway. Configuration and logs remain in the selected data directory.
 
-Il doppio clic dell'eseguibile foreground usa `%LocalAppData%\NXTROUTE` e apre automaticamente il browser. L'installer crea direttamente il collegamento browser e il servizio. Per questa prima prova il setup non va considerato una release di produzione.
+Double-clicking the foreground executable uses `%LocalAppData%\NXTROUTE` and opens the browser automatically. The installer creates a browser shortcut and registers the service. This initial installer is not a production release.
 
-## Compilazione
+## Build
 
-Requisiti sviluppatore: Windows x64, .NET SDK 8.0.319, cartelle locali MediaMTX 1.21.1 e FFmpeg compatibile. Inno Setup opzionale per generare il setup. Non installare SDK proprietari per la demo sintetica.
+Developer requirements: Windows x64, .NET SDK 8.0.319, local MediaMTX 1.21.1 and compatible FFmpeg directories. Inno Setup is optional for building the installer. Proprietary SDKs are not required for the synthetic demo.
 
 ```powershell
 .\scripts\build-windows.ps1 `
@@ -29,24 +29,24 @@ Requisiti sviluppatore: Windows x64, .NET SDK 8.0.319, cartelle locali MediaMTX 
   -InnoCompiler 'C:\tools\Inno Setup\ISCC.exe'
 ```
 
-Output: `dist/portable` e, con Inno, `dist/NXTROUTE-Setup-0.1.0.exe`. Gli archivi, binari, SDK, log e video non vengono commessi. Consultare [licenze e limiti di redistribuzione](docs/DEPENDENCIES.md) **prima di pubblicare un pacchetto binario**.
+Output: `dist/portable` and, when Inno Setup is supplied, `dist/NXTROUTE-Setup-0.1.0.exe`. Archives, binaries, SDKs, logs and videos are excluded from Git. Review [dependency licenses and redistribution limits](docs/DEPENDENCIES.md) **before publishing binary packages**.
 
-## Verifica automatica
+## Automated verification
 
-Node serve soltanto agli sviluppatori per i test. Edge deve essere già installato; non si scarica un browser aggiuntivo.
+Node.js is only a developer test dependency. Edge must already be installed; the tests do not download another browser.
 
 ```powershell
 npm ci --cache .runtime/npm-cache
 npm test
 ```
 
-Il test richiede la build locale e porte della demo libere. Avvia il gateway con dati separati, verifica start/stop, due canali, riavvio encoder, isolamento, persistenza, video/audio in Edge e cleanup; salva screenshot e misure in `test-results`. Per usare un browser Chromium diverso impostare `BROWSER_PATH` al suo eseguibile. Per collaudare soltanto il browser su un gateway già acceso: `npm run verify:browser`.
+The test requires the local build and available demo ports. It starts the gateway with separate test data and checks start/stop, two channels, encoder recovery, channel isolation, persistence, video/audio playback in Edge and child-process cleanup. Screenshots and measurements are saved to `test-results`. To use a different Chromium browser, set `BROWSER_PATH` to its executable. To test browser playback against an already running gateway, use `npm run verify:browser`.
 
-## Installazione del servizio — richiede amministratore
+## Windows service installation
 
-Il setup registra NXTROUTE con avvio automatico, account NetworkService e dati in `%ProgramData%\NXTROUTE`. Dopo l'installazione, il collegamento apre la dashboard; chiudere il browser non ferma i canali. Il primo collaudo del setup richiede conferma/intervento dell'utente ed è ancora da eseguire.
+Administrator privileges are required. The installer registers NXTROUTE with automatic startup, the NetworkService account and data in `%ProgramData%\NXTROUTE`. The shortcut opens the dashboard; closing the browser does not stop channels. Installation testing still requires user intervention and has not been performed.
 
-Comandi esatti di verifica, avvio e arresto in PowerShell amministratore:
+Run these commands in an administrator PowerShell session to inspect, start and stop the service:
 
 ```powershell
 sc.exe query NXTROUTE
@@ -54,15 +54,15 @@ sc.exe start NXTROUTE
 sc.exe stop NXTROUTE
 ```
 
-Disinstallare da Impostazioni > App > NXTROUTE. Le configurazioni ProgramData vengono preservate. Non avviare la modalità foreground contemporaneamente al servizio: usano le stesse porte. Nessun driver viene installato/aggiornato e nessuna porta firewall viene aperta dalla prima versione.
+Uninstall through Settings > Apps > NXTROUTE. ProgramData configuration is preserved. Do not run the foreground application alongside the service: they use the same ports. This initial version does not install or update drivers and does not open firewall ports.
 
-## Documentazione
+## Documentation
 
-- [Architettura e decisioni](docs/ARCHITECTURE.md)
-- [Roadmap e criteri di accettazione](docs/ROADMAP.md)
-- [Hardware, prove e limiti](docs/HARDWARE-REPORT.md)
-- [Licenze delle dipendenze](docs/DEPENDENCIES.md)
-- [Stato degli adattatori](adapters/README.md)
+- [Architecture and decisions](docs/ARCHITECTURE.md)
+- [Roadmap and acceptance criteria](docs/ROADMAP.md)
+- [Hardware inspection, tests and limitations](docs/HARDWARE-REPORT.md)
+- [Dependency licensing](docs/DEPENDENCIES.md)
+- [Adapter status](adapters/README.md)
 - [Changelog](CHANGELOG.md)
 
-Codice originale: MIT. Dipendenze proprietarie e GPL hanno termini propri. Non promettiamo compatibilità universale dei codec, GPU o schede di acquisizione.
+Original code: MIT. Proprietary and GPL dependencies retain their own terms. Codec, GPU and capture-card compatibility is not universal.

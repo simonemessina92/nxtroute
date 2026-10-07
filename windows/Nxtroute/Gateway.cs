@@ -36,7 +36,7 @@ public sealed class Gateway : BackgroundService
         Directory.CreateDirectory(dataDir);
         Directory.CreateDirectory(Path.Combine(dataDir, "logs"));
         var file = Path.Combine(dataDir, "channels.json");
-        channels = File.Exists(file) ? JsonSerializer.Deserialize<List<Channel>>(await File.ReadAllTextAsync(file, cancellationToken), json) ?? [] : [new("demo", "Test locale 720p25 + tono 1 kHz")];
+        channels = File.Exists(file) ? JsonSerializer.Deserialize<List<Channel>>(await File.ReadAllTextAsync(file, cancellationToken), json) ?? [] : [new("demo", "Local test 720p25 + 1 kHz tone")];
         if (channels.Count > 8 || channels.Select(channel => channel.Id).Distinct().Count() != channels.Count || channels.Any(channel => !System.Text.RegularExpressions.Regex.IsMatch(channel.Id, "^(demo|test-[a-f0-9]{8})$"))) throw new InvalidDataException("Invalid channel configuration");
         await SaveAsync();
         await base.StartAsync(cancellationToken);
@@ -89,8 +89,8 @@ public sealed class Gateway : BackgroundService
         await gate.WaitAsync();
         try
         {
-            if (shuttingDown) throw new InvalidOperationException("Arresto in corso.");
-            if (channels.Count >= 8) throw new InvalidOperationException("La demo supporta al massimo 8 canali sintetici.");
+            if (shuttingDown) throw new InvalidOperationException("Shutdown in progress.");
+            if (channels.Count >= 8) throw new InvalidOperationException("The demo supports up to 8 synthetic channels.");
             var channel = new Channel("test-" + Guid.NewGuid().ToString("N")[..8], name, false);
             channels.Add(channel);
             try { await SaveAsync(); }
@@ -188,7 +188,7 @@ public sealed class Gateway : BackgroundService
             channels = snapshot.Select(channel => new
             {
                 channel.Id, channel.Name, channel.Enabled,
-                adapter = "synthetic", status = "sperimentale", pid = pids.GetValueOrDefault(channel.Id),
+                adapter = "synthetic", status = "experimental", pid = pids.GetValueOrDefault(channel.Id),
                 webrtcPath = channel.Id + "/webrtc", hlsPath = channel.Id + "/hls",
                 ready = Ready(channel.Id + "/webrtc") && Ready(channel.Id + "/hls"),
                 renditions = new { webrtc = Rendition(channel.Id + "/webrtc"), hls = Rendition(channel.Id + "/hls") }

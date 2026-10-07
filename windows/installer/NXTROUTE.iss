@@ -18,7 +18,7 @@ UninstallDisplayIcon={app}\NXTROUTE.exe
 CloseApplications=yes
 
 [Languages]
-Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "..\..\dist\portable\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -27,11 +27,11 @@ Source: "..\..\dist\portable\*"; DestDir: "{app}"; Flags: ignoreversion recurses
 Name: "{commonappdata}\NXTROUTE"; Permissions: networkservice-modify
 
 [Icons]
-Name: "{group}\Apri NXTROUTE"; Filename: "http://127.0.0.1:3000"
+Name: "{group}\Open NXTROUTE"; Filename: "http://127.0.0.1:3000"
 Name: "{autodesktop}\NXTROUTE"; Filename: "http://127.0.0.1:3000"
 
 [Run]
-Filename: "http://127.0.0.1:3000"; Description: "Apri la dashboard NXTROUTE"; Flags: shellexec postinstall skipifsilent runasoriginaluser
+Filename: "http://127.0.0.1:3000"; Description: "Open the NXTROUTE dashboard"; Flags: shellexec postinstall skipifsilent runasoriginaluser
 
 [UninstallRun]
 Filename: "{sys}\sc.exe"; Parameters: "stop NXTROUTE"; Flags: runhidden waituntilterminated; RunOnceId: "StopService"
@@ -42,12 +42,12 @@ function InitializeSetup(): Boolean;
 begin
   if RegKeyExists(HKLM, 'SYSTEM\CurrentControlSet\Services\NXTROUTE') then
   begin
-    MsgBox('NXTROUTE è già installato. Questa prima versione non supporta aggiornamenti in-place: disinstallare prima il programma. I dati dei canali vengono conservati.', mbError, MB_OK);
+    MsgBox('NXTROUTE is already installed. This initial version does not support in-place upgrades: uninstall the application first. Channel data will be preserved.', mbError, MB_OK);
     Result := False;
     Exit;
   end;
   Result := True;
-  MsgBox('Questa versione verifica il gateway con sorgenti sintetiche. SDI e NDI non sono ancora disponibili. Nessun driver Blackmagic o NDI Tools verrà installato o aggiornato.', mbInformation, MB_OK);
+  MsgBox('This version tests the gateway with synthetic sources. SDI and NDI are not yet available. No Blackmagic drivers or NDI Tools will be installed or updated.', mbInformation, MB_OK);
 end;
 
 procedure ServiceCommand(Parameters: String);
@@ -55,9 +55,9 @@ var
   ResultCode: Integer;
 begin
   if not Exec(ExpandConstant('{sys}\sc.exe'), Parameters, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-    RaiseException('Impossibile eseguire il gestore servizi Windows.');
+    RaiseException('Unable to run the Windows Service Control Manager.');
   if ResultCode <> 0 then
-    RaiseException('Configurazione del servizio NXTROUTE non riuscita. Codice Windows: ' + IntToStr(ResultCode));
+    RaiseException('NXTROUTE service configuration failed. Windows error code: ' + IntToStr(ResultCode));
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

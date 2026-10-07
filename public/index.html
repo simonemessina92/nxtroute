@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NXTROUTE</title>
@@ -7,19 +7,19 @@
 body{font:16px system-ui;background:#101821;color:#e6edf3;margin:40px auto;max-width:1000px;padding:0 20px}h1{letter-spacing:.15em}article{background:#1b2836;padding:24px;border-radius:12px;margin:16px 0}a{color:#70d8e7;margin-right:20px}iframe{border:0;width:100%;aspect-ratio:16/9;margin-top:16px}button{padding:10px;margin:12px 12px 0 0;cursor:pointer}small{color:#b7c8d8}
 </style>
 <h1>NXTROUTE</h1>
-<p>Gateway video · demo locale</p>
-<p id="router">Verifica del router…</p>
-<form id="new-channel"><input id="channel-name" placeholder="Nome del canale di test" maxlength="80" required><button>Aggiungi test</button></form>
+<p>Video gateway · local demo</p>
+<p id="router">Checking router…</p>
+<form id="new-channel"><input id="channel-name" placeholder="Test channel name" maxlength="80" required><button>Add test</button></form>
 <p id="message" role="status"></p>
-<small>Prima versione: sorgenti sintetiche. Ingressi SDI e NDI in preparazione.</small>
+<small>Initial release: synthetic sources. SDI and NDI inputs are planned.</small>
 <main id="channels"></main>
 <script>
 const cards = new Map();
 async function action(url, body) {
   try {
     const response = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body ?? {}) });
-    if (!response.ok) throw new Error('Operazione non riuscita (' + response.status + ')');
-    document.querySelector('#message').textContent = 'Configurazione salvata';
+    if (!response.ok) throw new Error('Operation failed (' + response.status + ')');
+    document.querySelector('#message').textContent = 'Configuration saved';
   } catch (error) { document.querySelector('#message').textContent = error.message; }
 }
 document.querySelector('#new-channel').onsubmit = async event => {
@@ -30,7 +30,7 @@ async function refresh() {
   try {
     const response = await fetch('/api/channels');
     const result = await response.json();
-    document.querySelector('#router').textContent = result.router === 'online' ? 'MediaMTX raggiungibile' : 'MediaMTX non raggiungibile: stato sconosciuto';
+    document.querySelector('#router').textContent = result.router === 'online' ? 'MediaMTX reachable' : 'MediaMTX unreachable: status unknown';
     for (const channel of result.channels) {
       let card = cards.get(channel.id);
       if (!card) {
@@ -40,7 +40,7 @@ async function refresh() {
         const status = document.createElement('p');
         status.className = 'status';
         card.append(title, status);
-        for (const [label, operation] of [['Avvia', 'start'], ['Ferma', 'stop']]) {
+        for (const [label, operation] of [['Start', 'start'], ['Stop', 'stop']]) {
           const control = document.createElement('button');
           control.textContent = label;
           control.onclick = () => action('/api/channels/' + encodeURIComponent(channel.id) + '/' + operation);
@@ -51,7 +51,7 @@ async function refresh() {
         logButton.onclick = async () => {
           try {
             const response = await fetch('/api/channels/' + encodeURIComponent(channel.id) + '/logs');
-            if (!response.ok) throw new Error('Log non disponibile');
+            if (!response.ok) throw new Error('Log unavailable');
             let log = card.querySelector('pre');
             if (!log) { log = document.createElement('pre'); log.style.cssText = 'overflow:auto;max-height:240px;font-size:12px'; card.append(log); }
             log.textContent = (await response.json()).join('\n');
@@ -69,7 +69,7 @@ async function refresh() {
           link.rel = 'noopener';
           link.textContent = label;
           const button = document.createElement('button');
-          button.textContent = 'Guarda ' + label;
+          button.textContent = 'Watch ' + label;
           button.onclick = () => {
             card.querySelector('iframe')?.remove();
             const frame = document.createElement('iframe');
@@ -83,11 +83,11 @@ async function refresh() {
         document.querySelector('#channels').append(card);
         cards.set(channel.id, card);
       }
-      card.querySelector('.status').textContent = result.router !== 'online' ? 'Stato sconosciuto' : `${channel.ready ? 'In onda' : 'Offline o parziale'} · WebRTC: ${channel.renditions.webrtc.tracks.join(', ') || 'nessuna traccia'} · HLS: ${channel.renditions.hls.tracks.join(', ') || 'nessuna traccia'}`;
+      card.querySelector('.status').textContent = result.router !== 'online' ? 'Status unknown' : `${channel.ready ? 'On air' : 'Offline or partial'} · WebRTC: ${channel.renditions.webrtc.tracks.join(', ') || 'no tracks'} · HLS: ${channel.renditions.hls.tracks.join(', ') || 'no tracks'}`;
     }
   } catch {
-    document.querySelector('#router').textContent = 'Dashboard non raggiungibile: stato sconosciuto';
-    for (const card of cards.values()) card.querySelector('.status').textContent = 'Stato sconosciuto';
+    document.querySelector('#router').textContent = 'Dashboard unreachable: status unknown';
+    for (const card of cards.values()) card.querySelector('.status').textContent = 'Status unknown';
   }
   setTimeout(refresh, 2000);
 }

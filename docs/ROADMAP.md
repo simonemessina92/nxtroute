@@ -1,38 +1,38 @@
 # Roadmap
 
-Ogni traguardo deve produrre una demo ripetibile. Nessuna dichiarazione di funzionamento prima del test. Non iniziare l'adattatore successivo finché il precedente non supera i criteri.
+Every milestone must leave a repeatable demo. Do not claim a feature works before testing it. Do not start the next hardware adapter until the current one meets its acceptance criteria.
 
-## M1 — Canale sintetico Windows
+## M1 — Synthetic Windows channel
 
-- [x] MediaMTX 1.21.1 e FFmpeg locali, avviabili senza installazione di sistema.
-- [x] Visione WebRTC/WHEP e HLS in Edge: primo test video passato.
-- [x] Backend .NET compilato come eseguibile self-contained.
-- [x] Dashboard originale con stato reale, creazione canali test, avvio, arresto e log.
-- [x] Test completo aggiornato: audio decodificato, isolamento, recovery, persistenza e cleanup.
-- [x] Installer compilato.
-- [ ] Installer collaudato come servizio con utente ordinario dopo installazione amministrativa.
-- [ ] Pacchetto pubblico: sorgenti corrispondenti e obblighi di tutti i binari soddisfatti.
+- [x] Local MediaMTX 1.21.1 and FFmpeg, runnable without system installation.
+- [x] WebRTC/WHEP and HLS video playback in Edge.
+- [x] .NET backend published as a self-contained executable.
+- [x] Original dashboard with real status, test-channel creation, start/stop and logs.
+- [x] Integration test: decoded audio, isolation, recovery, persistence and cleanup.
+- [x] Installer compiled.
+- [ ] Installer tested as a service under an ordinary user after administrator installation.
+- [ ] Public binary package: corresponding sources and all redistribution obligations satisfied.
 
-Accettazione: almeno un browser riproduce video e audio per entrambe le rendition; errore di un encoder non cambia PID o stato del secondo; riavvio del gateway ripristina la configurazione; arresto elimina i figli; limiti e misure sono riportati nel report. Il collaudo service/installer è un sotto-traguardo distinto e non può essere dedotto dalla modalità foreground.
+Acceptance: at least one browser plays video and audio from both renditions; an encoder failure does not change the other channel's PID or readiness; gateway restart restores configuration; shutdown removes child processes; measurements and limitations are documented. Service/installer testing is a separate checkpoint and cannot be inferred from foreground operation.
 
-## M2 — Una sorgente SDI / DeckLink
+## M2 — One SDI / DeckLink source
 
-Inventario preciso delle schede e delle versioni driver. Ottenere lo SDK senza commetterlo nel repository. Scegliere adattatore C++ diretto oppure GStreamer dopo prove sulla workstation; non distribuire una build FFmpeg nonfree senza verifica.
+Identify cards and driver versions. Obtain the SDK without committing it. Choose a direct C++ adapter or GStreamer based on workstation tests. Do not redistribute a nonfree FFmpeg build without reviewing its terms.
 
-Accettazione: una sorgente reale, formato documentato, audio SDI verificato, sincronizzazione audio/video, 30 minuti senza crash, perdita/ripristino segnale e ripartenza senza fermare un canale sintetico. Uscita SDI è un adattatore successivo: non viene dichiarata funzionante insieme alla cattura.
+Acceptance: one real source with documented format, verified SDI audio and audio/video synchronization, 30 minutes without crashes, signal loss/recovery and restart without interrupting a synthetic channel. SDI output is a later adapter and must not be declared working merely because capture works.
 
-## M3 — Una sorgente NDI standard
+## M3 — One standard NDI source
 
-Discovery, selezione sorgente, ricezione tramite SDK standard, adattatore indipendente. Definire esattamente runtime, versioni e licenze necessarie: NDI Tools interi non obbligatori.
+Discovery, source selection and reception through the standard SDK, using an independent adapter. Specify runtime versions and licenses; the complete NDI Tools package is not mandatory.
 
-Accettazione: discovery sulla NIC scelta, video/audio verificati, 30 minuti, disconnessione/riconnessione, sorgente scomparsa mostrata correttamente, nessun effetto su SDI o altri canali.
+Acceptance: discovery on the selected NIC, verified video/audio, 30-minute test, disconnection/reconnection, accurate source-loss status and no effect on SDI or other channels.
 
-## M4 — Ingressi e uscite progressivi
+## M4 — Additional inputs and outputs
 
-Prima RTMP o SRT, poi ulteriori protocolli già implementati da MediaMTX. Una combinazione alla volta con codec, errore, riconnessione e procedura ripetibile documentati. Aggiungere NDI out e SDI out separatamente.
+Start with RTMP or SRT, then add protocols already implemented by MediaMTX. Test one combination at a time and document codecs, failures, reconnection and a repeatable procedure. Add NDI output and SDI output separately.
 
-## M5 — Esperienza di installazione completa
+## M5 — Complete installation experience
 
-Rilevamento prerequisiti, installazione guidata dai pacchetti ufficiali solo nei limiti autorizzati dai vendor, diagnostica dispositivi/porte, configurazione LAN con autenticazione e TLS, multiview, aggiornamenti con rollback. Firma del pacchetto: eventuale costo del certificato non deve essere confuso con il prezzo del software.
+Prerequisite detection, guided official-package installation within vendor permissions, device/port diagnostics, authenticated LAN access with TLS, multiview and updates with rollback. Any signing-certificate cost must be distinguished from the software's price.
 
-Accettazione: test su Windows pulito, nessun terminale necessario all'operatore, disinstallazione senza processi residui e preservazione esplicita delle configurazioni. Niente aggiornamenti driver automatici su una workstation funzionante.
+Acceptance: test on a clean Windows installation, no terminal required for operators, uninstall leaves no child processes and explicitly preserves configuration. Do not automatically update drivers on a working workstation.

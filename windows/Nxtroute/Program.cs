@@ -35,12 +35,12 @@ app.MapGet("/api/system", () => Results.Json(new
 {
     version = "0.1.0",
     mode = WindowsServiceHelpers.IsWindowsService() ? "Windows service" : "foreground",
-    decklink = new { status = "previsto", filesDetected = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Blackmagic Design", "Blackmagic Desktop Video", "DeckLinkAPI64.dll")), note = "File Desktop Video rilevabili; schede e driver caricati non ancora verificati. Nessun driver viene installato automaticamente." },
-    ndi = new { status = "previsto", note = "SDK standard: integrazione e condizioni di distribuzione da verificare." }
+    decklink = new { status = "planned", filesDetected = File.Exists(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Blackmagic Design", "Blackmagic Desktop Video", "DeckLinkAPI64.dll")), note = "Desktop Video files can be detected; cards and loaded drivers have not been verified. No drivers are installed automatically." },
+    ndi = new { status = "planned", note = "Standard SDK: integration and redistribution terms still need verification." }
 }));
 app.MapPost("/api/channels", async (NewChannel input, Gateway gateway) =>
 {
-    if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Length > 80) return Results.BadRequest(new { error = "Nome richiesto, massimo 80 caratteri." });
+    if (string.IsNullOrWhiteSpace(input.Name) || input.Name.Length > 80) return Results.BadRequest(new { error = "A name is required, up to 80 characters." });
     try { return Results.Ok(await gateway.AddAsync(input.Name.Trim())); }
     catch (InvalidOperationException exception) { return Results.BadRequest(new { error = exception.Message }); }
 });
@@ -52,7 +52,7 @@ if (!WindowsServiceHelpers.IsWindowsService() && !builder.Configuration.GetValue
     app.Lifetime.ApplicationStarted.Register(() =>
     {
         try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("http://127.0.0.1:3000") { UseShellExecute = true }); }
-        catch (System.ComponentModel.Win32Exception) { Console.WriteLine("Aprire http://127.0.0.1:3000 nel browser."); }
+        catch (System.ComponentModel.Win32Exception) { Console.WriteLine("Open http://127.0.0.1:3000 in your browser."); }
     });
 }
 await app.RunAsync();

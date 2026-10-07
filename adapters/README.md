@@ -1,12 +1,12 @@
-# Adattatori
+# Adapters
 
-| Adattatore | Requisiti e codec | Test | Stato |
+| Adapter | Requirements and codecs | Tests | Status |
 |---|---|---|---|
-| Synthetic | FFmpeg con lavfi, x264, Opus e AAC; 720p25, due rendition | Browser Edge, vedere HARDWARE-REPORT | Sperimentale: collaudo breve |
-| DeckLink input | Desktop Video e SDK Windows; formato SDI da rilevare | Nessuno | Previsto |
-| DeckLink output | Scheda/porta con playback, SDK Windows, formato di uscita | Nessuno | Previsto |
-| NDI input | SDK standard e runtime compatibile, NIC raggiungibile | Nessuno | Previsto |
-| NDI output | SDK standard, conversione formato video/audio e runtime | Nessuno | Previsto |
-| SRT / RTMP input | Listener MediaMTX, codec compatibili con uscite selezionate | Nessuno | Previsto nella UI |
+| Synthetic | FFmpeg with lavfi, x264, Opus and AAC; 720p25, two renditions | Edge browser; see HARDWARE-REPORT | Experimental: short test only |
+| DeckLink input | Desktop Video and Windows SDK; SDI format to be detected | None | Planned |
+| DeckLink output | Playback-capable card/port, Windows SDK, output format | None | Planned |
+| NDI input | Standard SDK and compatible runtime, reachable network interface | None | Planned |
+| NDI output | Standard SDK, video/audio format conversion and runtime | None | Planned |
+| SRT / RTMP input | MediaMTX listeners, codecs compatible with selected outputs | None | Planned in the UI |
 
-Synthetic è implementato nel gestore Windows. Gli adattatori hardware saranno processi separati, con discovery, errori, perdita segnale e retry propri. La colonna stato non implica compatibilità con qualsiasi codec o scheda.
+Synthetic capture is implemented in the Windows gateway manager. Hardware adapters will run as separate processes with their own discovery, error handling, signal-loss handling and retries. Status does not imply compatibility with every codec or capture card.

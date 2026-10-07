@@ -1,45 +1,45 @@
-# NXTROUTE: architettura Windows
+# NXTROUTE Windows architecture
 
-Decisione aggiornata il 7 ottobre 2026: Windows nativo, in seguito alla richiesta dell'utente. Il piano Docker/VM Ubuntu è stato sostituito esplicitamente. Un container Linux può usare dispositivi hardware esposti dall'host, ma il passthrough della scheda dalla workstation alla VM non è stato verificato.
+Decision updated on October 7, 2026: native Windows, as requested by the user. This explicitly replaces the Docker/Ubuntu VM plan. Linux containers can use hardware exposed by their host, but capture-card passthrough from this workstation into a VM has not been verified.
 
-## Componenti
+## Components
 
-- `NXTROUTE.exe`: applicazione ASP.NET Core .NET 8, pubblicata self-contained per Windows x64. Lo stesso eseguibile funziona in primo piano o come servizio Windows.
-- MediaMTX 1.21.1: processo indipendente per routing e protocolli. Nessuna implementazione originale di RTSP, RTMP, SRT, HLS, WebRTC o WHEP.
-- FFmpeg: un processo per canale sintetico. Il gestore controlla uscita, riavvio e arresto. Un crash del canale non riavvia gli altri canali.
-- Dashboard originale incorporata nell'eseguibile: elenco canali, stato reale API MediaMTX, creazione test, avvio/arresto, log e player. Per questa prima versione il player è quello già fornito da MediaMTX, incorporato nella dashboard.
-- DeckLink e NDI: adattatori separati, **previsti**, non ancora implementati. NDI userà lo SDK standard. Gli NDI Tools non sono un requisito automatico.
+- `NXTROUTE.exe`: ASP.NET Core application on .NET 8, published self-contained for Windows x64. The same executable runs in the foreground or as a Windows service.
+- MediaMTX 1.21.1: independent routing and protocol process. NXTROUTE does not reimplement RTSP, RTMP, SRT, HLS, WebRTC or WHEP.
+- FFmpeg: one process per synthetic channel, supervised for exit, restart and shutdown. A channel crash does not restart other channels.
+- Original dashboard embedded in the executable: channel list, real MediaMTX API status, test-channel creation, start/stop, logs and playback. This version embeds the existing MediaMTX player inside the dashboard.
+- DeckLink and NDI: separate adapters, **planned**, not implemented. NDI will use the standard SDK. Installing all NDI Tools is not automatically required.
 
 ```mermaid
 flowchart LR
-  Browser[Dashboard NXTROUTE] --> Gateway[Servizio NXTROUTE]
+  Browser[NXTROUTE dashboard] --> Gateway[NXTROUTE service]
   Gateway --> Router[MediaMTX]
-  Gateway --> Encoder[FFmpeg per canale]
-  Test[Test video e tono audio] --> Encoder
-  Encoder -->|RTSP TCP locale| Router
+  Gateway --> Encoder[FFmpeg per channel]
+  Test[Test video and audio tone] --> Encoder
+  Encoder -->|Local RTSP TCP| Router
   Router -->|WHEP / HLS| Browser
-  DeckLink[DeckLink - previsto] -.-> Encoder
-  NDI[NDI standard - previsto] -.-> Encoder
+  DeckLink[DeckLink - planned] -.-> Encoder
+  NDI[Standard NDI - planned] -.-> Encoder
 ```
 
-## Canali e codec
+## Channels and codecs
 
-Un canale logico produce due rendition dello stesso generatore: `ID/webrtc` (H.264 baseline, nessun B-frame, Opus stereo 48 kHz) e `ID/hls` (H.264 baseline, AAC stereo 48 kHz). Video 1280x720 a 25 fps, GOP 25, bitrate richiesto 2 Mbit/s per rendition. Questa scelta non presume la compatibilità universale di AAC su WebRTC o di Opus su ogni player HLS. La prima demo usa due codifiche video per semplicità: ottimizzare il riuso dell'encoder è un lavoro successivo.
+One logical channel produces two renditions of the same generator: `ID/webrtc` (H.264 baseline, no B-frames, stereo Opus at 48 kHz) and `ID/hls` (H.264 baseline, stereo AAC at 48 kHz). Video is 1280x720 at 25 fps, GOP 25, requested bitrate 2 Mbit/s per rendition. This does not assume universal AAC support in WebRTC or universal Opus support in HLS players. The initial demo uses two video encodes for simplicity; encoder reuse is a later optimization.
 
-MediaMTX permette soltanto il namespace dei canali sintetici; i canali ricevono identificatori generati dal server. Un massimo di 8 canali è un limite della demo, non una capacità hardware dimostrata. RTMP e SRT sono listener locali del router, ma non sono ancora ingressi configurabili nella UI e non sono stati collaudati.
+MediaMTX only allows the synthetic-channel namespace. Channel identifiers are server-generated. The eight-channel maximum is a demo limit, not a demonstrated hardware capacity. RTMP and SRT listeners exist locally but are not configurable inputs in the UI and have not been tested.
 
-## Persistenza, processi e rete
+## Persistence, processes and networking
 
-Configurazione JSON salvata tramite file temporaneo e rename. Per il servizio, dati in `%ProgramData%\NXTROUTE`; in modalità portabile, `%LocalAppData%\NXTROUTE` o directory esplicita `--data-dir`. Il file MediaMTX è generato dal gateway e non va modificato a mano durante l'esecuzione.
+JSON configuration is saved using a temporary file and rename. Service data lives in `%ProgramData%\NXTROUTE`; foreground data uses `%LocalAppData%\NXTROUTE` or an explicit `--data-dir`. MediaMTX configuration is generated by the gateway and should not be edited manually during execution.
 
-Retry dei processi falliti ogni 5 secondi. I processi figli sono associati a Windows Job Objects con `KILL_ON_JOB_CLOSE`: un arresto inatteso del gateway non deve lasciare encoder orfani. Il test verifica questa proprietà. Arresto richiesto: FFmpeg riceve `q`, attesa fino a 4 secondi, poi terminazione dell'albero. MediaMTX senza finestra viene terminato dopo la stessa attesa: **non è ancora implementato un segnale console Windows per il suo arresto cooperativo**. La demo non registra file video.
+Failed processes retry every five seconds. Child processes are attached to Windows Job Objects with `KILL_ON_JOB_CLOSE`; an unexpected gateway exit must not leave orphaned encoders. This is covered by the integration test. On requested shutdown, FFmpeg receives `q`, followed by a wait of up to four seconds and process-tree termination if necessary. Windowless MediaMTX is terminated after the same wait: **a Windows console signal for cooperative MediaMTX shutdown has not been implemented**. The demo does not record video files.
 
-Log timestampati per componente, rotazione a circa 5 MB e una copia precedente. L'interfaccia mostra le ultime 60 righe, limitando la lettura a 32 KB. Quando l'API non risponde lo stato è sconosciuto, mai un falso verde. Un processo vivo non basta a dichiarare un canale in onda: devono essere pronte entrambe le rendition.
+Each component has timestamped logs, rotating at approximately 5 MB with one previous copy. The UI shows the last 60 lines with a maximum read of 32 KB. If the API is unreachable, status is unknown. A live process alone does not make a channel on air: both renditions must be ready.
 
-Tutti i listener sono su loopback: dashboard 3000 TCP, MediaMTX API 9997 TCP, RTSP 8554 TCP, RTMP 1935 TCP, HLS 8888 TCP, WHEP 8889 TCP, WebRTC media 8189 UDP, SRT 8890 UDP. Nessuna modifica al firewall e nessuna esposizione alla LAN in questa versione. Le mutazioni della dashboard controllano `Origin`; l'header Host accetta soltanto localhost e 127.0.0.1. Non è una barriera contro altri programmi o utenti locali: autenticazione e TLS sono criteri obbligatori prima dell'accesso LAN.
+All listeners use loopback: dashboard 3000 TCP, MediaMTX API 9997 TCP, RTSP 8554 TCP, RTMP 1935 TCP, HLS 8888 TCP, WHEP 8889 TCP, WebRTC media 8189 UDP and SRT 8890 UDP. This version makes no firewall changes and exposes nothing to the LAN. Dashboard mutations check `Origin`; the Host header accepts only localhost and 127.0.0.1. This does not protect against other local programs or users. Authentication and TLS are required before enabling LAN access.
 
 ## Installer
 
-Inno Setup produce `NXTROUTE-Setup-0.1.0.exe`, con componenti redistribuibili esterni e .NET incluso. Il servizio usa NetworkService e i collegamenti aprono la dashboard. Installazione/disinstallazione del servizio e permessi ProgramData richiedono amministratore: non sono stati applicati automaticamente alla workstation. Driver Blackmagic e NDI non vengono installati nella prima demo; il flusso guidato dipenderà dall'esame delle licenze vendor.
+Inno Setup generates `NXTROUTE-Setup-0.1.0.exe` with separately licensed components and a bundled .NET runtime. The service uses NetworkService; shortcuts open the dashboard. Service installation/removal and ProgramData permissions require administrator privileges and have not been applied automatically to the workstation. The initial demo does not install Blackmagic or NDI components. Guided prerequisite installation depends on reviewing vendor terms.
 
-Fonti: [MediaMTX](https://mediamtx.org/docs/kickoff/introduction), [installazione e versioni](https://mediamtx.org/docs/kickoff/install), [player browser](https://mediamtx.org/docs/read/web-browsers), [servizi .NET](https://learn.microsoft.com/en-us/dotnet/core/extensions/windows-service), [DeckLink SDK](https://sdk-doc.blackmagicdesign.com/decklink-sdk/).
+Sources: [MediaMTX](https://mediamtx.org/docs/kickoff/introduction), [installation and versions](https://mediamtx.org/docs/kickoff/install), [browser players](https://mediamtx.org/docs/read/web-browsers), [.NET Windows services](https://learn.microsoft.com/en-us/dotnet/core/extensions/windows-service), [DeckLink SDK](https://sdk-doc.blackmagicdesign.com/decklink-sdk/).
