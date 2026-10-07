@@ -1,0 +1,11 @@
+.env
+node_modules/
+.runtime/
+logs/
+test-results/
+*.zip
+*.mp4
+*.sdk
+bin/
+obj/
+dist/

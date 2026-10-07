@@ -1,0 +1,12 @@
+{
+  "name": "nxtroute",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/windows.test.js",
+    "verify:browser": "node scripts/verify-browser.js"
+  },
+  "devDependencies": { "playwright": "1.56.1" }
+}

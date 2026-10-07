@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="it">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NXTROUTE</title>
+<style>
+body{font:16px system-ui;background:#101821;color:#e6edf3;margin:40px auto;max-width:1000px;padding:0 20px}h1{letter-spacing:.15em}article{background:#1b2836;padding:24px;border-radius:12px;margin:16px 0}a{color:#70d8e7;margin-right:20px}iframe{border:0;width:100%;aspect-ratio:16/9;margin-top:16px}button{padding:10px;margin:12px 12px 0 0;cursor:pointer}small{color:#b7c8d8}
+</style>
+<h1>NXTROUTE</h1>
+<p>Gateway video · demo locale</p>
+<p id="router">Verifica del router…</p>
+<form id="new-channel"><input id="channel-name" placeholder="Nome del canale di test" maxlength="80" required><button>Aggiungi test</button></form>
+<p id="message" role="status"></p>
+<small>Prima versione: sorgenti sintetiche. Ingressi SDI e NDI in preparazione.</small>
+<main id="channels"></main>
+<script>
+const cards = new Map();
+async function action(url, body) {
+  try {
+    const response = await fetch(url, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body ?? {}) });
+    if (!response.ok) throw new Error('Operazione non riuscita (' + response.status + ')');
+    document.querySelector('#message').textContent = 'Configurazione salvata';
+  } catch (error) { document.querySelector('#message').textContent = error.message; }
+}
+document.querySelector('#new-channel').onsubmit = async event => {
+  event.preventDefault();
+  await action('/api/channels', { name: document.querySelector('#channel-name').value });
+};
+async function refresh() {
+  try {
+    const response = await fetch('/api/channels');
+    const result = await response.json();
+    document.querySelector('#router').textContent = result.router === 'online' ? 'MediaMTX raggiungibile' : 'MediaMTX non raggiungibile: stato sconosciuto';
+    for (const channel of result.channels) {
+      let card = cards.get(channel.id);
+      if (!card) {
+        card = document.createElement('article');
+        const title = document.createElement('h2');
+        title.textContent = channel.name;
+        const status = document.createElement('p');
+        status.className = 'status';
+        card.append(title, status);
+        for (const [label, operation] of [['Avvia', 'start'], ['Ferma', 'stop']]) {
+          const control = document.createElement('button');
+          control.textContent = label;
+          control.onclick = () => action('/api/channels/' + encodeURIComponent(channel.id) + '/' + operation);
+          card.append(control);
+        }
+        const logButton = document.createElement('button');
+        logButton.textContent = 'Log';
+        logButton.onclick = async () => {
+          try {
+            const response = await fetch('/api/channels/' + encodeURIComponent(channel.id) + '/logs');
+            if (!response.ok) throw new Error('Log non disponibile');
+            let log = card.querySelector('pre');
+            if (!log) { log = document.createElement('pre'); log.style.cssText = 'overflow:auto;max-height:240px;font-size:12px'; card.append(log); }
+            log.textContent = (await response.json()).join('\n');
+          } catch (error) { document.querySelector('#message').textContent = error.message; }
+        };
+        card.append(logButton, document.createElement('br'));
+        for (const [label, port, path] of [['WebRTC / WHEP', 8889, channel.webrtcPath], ['HLS', 8888, channel.hlsPath]]) {
+          const url = new URL(location.href);
+          url.port = port;
+          url.pathname = '/' + path;
+          url.search = '';
+          const link = document.createElement('a');
+          link.href = url.href;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = label;
+          const button = document.createElement('button');
+          button.textContent = 'Guarda ' + label;
+          button.onclick = () => {
+            card.querySelector('iframe')?.remove();
+            const frame = document.createElement('iframe');
+            frame.title = label;
+            frame.allow = 'autoplay; fullscreen';
+            frame.src = url.href;
+            card.append(frame);
+          };
+          card.append(link, button);
+        }
+        document.querySelector('#channels').append(card);
+        cards.set(channel.id, card);
+      }
+      card.querySelector('.status').textContent = result.router !== 'online' ? 'Stato sconosciuto' : `${channel.ready ? 'In onda' : 'Offline o parziale'} · WebRTC: ${channel.renditions.webrtc.tracks.join(', ') || 'nessuna traccia'} · HLS: ${channel.renditions.hls.tracks.join(', ') || 'nessuna traccia'}`;
+    }
+  } catch {
+    document.querySelector('#router').textContent = 'Dashboard non raggiungibile: stato sconosciuto';
+    for (const card of cards.values()) card.querySelector('.status').textContent = 'Stato sconosciuto';
+  }
+  setTimeout(refresh, 2000);
+}
+refresh();
+</script>
+</html>
